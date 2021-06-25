@@ -1,3 +1,21 @@
+## [1.0.8] - 2021-04-26
+### Speed up CA process with better memory management and byte compiling.
+
+## [1.0.7] - 2017-02-26
+### Ensure references are cited in Journal of Open Source Software paper
+
+## [1.0.6] - 2018-02-01
+### Moves JOSS references into BibTeX
+
+## [1.0.5] - 2018-02-01
+### Fix typo in Journal of Open Source Software paper
+
+## [1.0.4] - 2018-02-01
+### Addresses comments from the Journal of Open Source Software review
+
+## [1.0.3] - 2017-06-07
+### Adds paper for The Journal of Open Source Software
+
 ## [1.0.2] - 2016-12-01
 ### Ensure that package check tools ignore NSE vars
 

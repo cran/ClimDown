@@ -127,7 +127,7 @@ apply.analogue <- function(x, weights) {
 # analog.indices: vector of time indices that correspond to the timesteps to compose together
 # weights: vector of length num.analogues corresponding to the analog indices
 # obs.nc: An open netcdf file containing gridded observations
-apply.analogues.netcdf <- function(analog.indices, weights, obs.nc, varid='tasmax') {
+apply.analogues.netcdf.c <- function(analog.indices, weights, obs.nc, varid='tasmax') {
     dims <- c(obs.nc$var[[varid]]$size[1:2],getOption('n.analogues'))
     apply(
         array(
@@ -146,6 +146,8 @@ apply.analogues.netcdf <- function(analog.indices, weights, obs.nc, varid='tasma
         1:2, sum
     )
 }
+
+apply.analogues.netcdf <- compiler::cmpfun(apply.analogues.netcdf.c)
 
 # obs.at.analogues should be a matrix (n.analogues x number of cells)
 # gcm.values should a 1d vector of gcm values for each cell at the given time step
@@ -214,10 +216,13 @@ find.analogues <- function(gcm, agged.obs, times, now, n.analogues=getOption('n.
     # (obs years * (delta days * 2 + 1)) x cells
     # substract the GCM at this time step from the aggregated obs *for every library time value*
     # square that difference
-
-    diffs <- (agged.obs - array(gcm, dim(agged.obs))) ^ 2
-    diffs <- apply(diffs, 3, sum, na.rm=T)
-
+    
+    find.daily.distance <- function(day) {
+      distances <- (agged.obs[,,day] - gcm) ^2
+      sum(distances, na.rm=T)
+    }
+    diffs <- sapply(seq_along(ti), find.daily.distance)
+    
     # Then find the 30 lowest differences
     # returns the indices for the n closest analogues
     # of this particular GCM timestep
@@ -282,6 +287,14 @@ mk.output.ncdf <- function(file.name, varname, template.nc, global.attrs=list())
 #' @param obs.file Filename of high-res gridded historical observations
 #' @param varname Name of the NetCDF variable to downscale (e.g. 'tasmax')
 #' @return A list object with two values: 'indices' and 'weights', each of which is a vector with 30 items
+#'
+#' @examples
+#' \dontrun{
+#' options(
+#'     calibration.end=as.POSIXct('1972-12-31', tz='GMT')
+#' )
+#' analogues <- ClimDown::ca.netcdf.wrapper('./tiny_gcm.nc', './tiny_obs.nc')
+#' }
 #'
 #' @references Maurer, E. P., Hidalgo, H. G., Das, T., Dettinger, M. D., & Cayan, D. R. (2010). The utility of daily large-scale climate data in the assessment of climate change impacts on daily streamflow in California. Hydrology and Earth System Sciences, 14(6), 1125-1138.
 #' @export
